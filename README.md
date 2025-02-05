@@ -1,93 +1,216 @@
-# Nestjs Showcase
+# 📌 Backend API with NestJS, PostgreSQL, and Apache Airflow (Dockerized)
 
+## 🏗️ Tech Stack
+- **Backend:** NestJS (TypeScript)
+- **Database:** PostgreSQL
+- **Workflow Manager:** Apache Airflow
+- **Containerization:** Docker & Docker Compose
+- **Environment:** Node.js 18+
 
+---
 
-## Getting started
+## 📦 1. Installation & Setup
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+### 🛠 Prerequisites
+Make sure you have installed:
+- [Node.js](https://nodejs.org/en) (v18 or later)
+- [Docker](https://www.docker.com/) & [Docker Compose](https://docs.docker.com/compose/install/)
+- [Git](https://git-scm.com/)
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
-
+### 📥 Clone Repository
+```bash
+git clone https://github.com/iniarif/order-service.git
+cd order-service
 ```
-cd existing_repo
-git remote add origin https://gitlab.com/reactions.indonesia/nestjs-showcase.git
-git branch -M main
-git push -uf origin main
+
+### ⚙️ Setup Environment
+Create a `.env` file based on `.env.example` and configure the environment variables.
+
+```bash
+cp .env.example .env
 ```
 
-## Integrate with your tools
+Adjust the **database** and **Airflow** configuration.
 
-- [ ] [Set up project integrations](https://gitlab.com/reactions.indonesia/nestjs-showcase/-/settings/integrations)
+```ini
+# Backend Config
+NODE_ENV=development
+PORT=3000
 
-## Collaborate with your team
+# Database Config
+DB_HOST=db
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=password
+DB_NAME=mydatabase
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+# Airflow Config
+AIRFLOW_URL=http://localhost:8080
+```
 
-## Test and Deploy
+---
 
-Use the built-in continuous integration in GitLab.
+## 🚀 2. Running the Application with Docker
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+Use **Docker Compose** to start all services.
 
-***
+```bash
+docker-compose up -d
+```
 
-# Editing this README
+This will start:
+1. **Backend API** (NestJS)
+2. **PostgreSQL** (Database)
+3. **Apache Airflow** (Workflow Scheduler)
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+Check if all containers are running:
+```bash
+docker ps
+```
 
-## Suggestions for a good README
+---
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+## 🔧 3. Project Structure
+```plaintext
+order-service/
+│── src/                # Main NestJS code
+│   ├── modules/        # Application modules
+│   ├── controllers/    # API Controllers
+│   ├── services/       # Business logic
+│   ├── entities/       # Database Entities (TypeORM)
+│   ├── config/         # Application Configuration
+│   ├── main.ts         # NestJS Entry Point
+│── dags/               # Airflow DAGs (Workflow)
+│── docker/             # Docker Configuration
+│── .env.example        # Environment Variables Example
+│── docker-compose.yml  # Docker Compose File
+│── package.json        # Dependencies
+│── README.md           # Documentation
+```
 
-## Name
-Choose a self-explaining name for your project.
+---
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+## 🏗️ 4. Docker Compose Configuration
+The `docker-compose.yml` file manages the main services:
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+```yaml
+version: '3.8'
+services:
+  backend:
+    build: .
+    container_name: nestjs_api
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    env_file: .env
+    networks:
+      - app-network
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+  db:
+    image: postgres:15
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mydatabase
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+  airflow:
+    image: apache/airflow:2.6.2
+    container_name: airflow_scheduler
+    restart: always
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:password@db:5432/mydatabase
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    networks:
+      - app-network
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+volumes:
+  postgres_data:
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+networks:
+  app-network:
+    driver: bridge
+```
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+---
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+## 🛠 5. Running & Using the Application
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+### 🎯 5.1 Backend API (NestJS)
+Check if the backend is running correctly:
+```bash
+docker logs nestjs_api -f
+```
+Check the API in the browser or Postman:
+```
+http://localhost:3000/api
+```
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+### 🎯 5.2 Database (PostgreSQL)
+Check database connection:
+```bash
+docker exec -it postgres_db psql -U postgres -d mydatabase
+```
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+### 🎯 5.3 Apache Airflow
+Access the Airflow UI at:
+```
+http://localhost:8080
+```
+Default login credentials:
+- **Username:** `airflow`
+- **Password:** `airflow`
 
-## License
-For open source projects, say how it is licensed.
+---
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+## 📌 6. API Endpoint
+| Method | Endpoint     | Description       |
+|--------|-------------|------------------|
+| POST   | `/api/orders` | Create a new order |
+
+Use **Postman** or **cURL** to test the API.
+
+---
+
+## 📌 7. Troubleshooting
+
+### ❗ `Port already in use` Issue
+Stop any process using port `3000`, `5432`, or `8080`:
+```bash
+sudo lsof -i :3000
+kill -9 <PID>
+```
+
+### ❗ Database Connection Error
+Check if the database is running:
+```bash
+docker logs postgres_db
+```
+
+### ❗ Airflow Not Accessible
+Restart Airflow:
+```bash
+docker-compose restart airflow
+```
+
+---
+
+## 🎯 8. Contributors & License
+✍️ **Created by:** [Your Name](https://github.com/iniarif)  
+📜 **License:** MIT License  
+📧 **Contact:** your.email@example.com
+
+🔥 Happy Coding! 🚀
+

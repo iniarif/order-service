@@ -1,0 +1,39 @@
+# azure-pipelines.yml
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: "ubuntu-latest"
+
+steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: "16.x"
+    displayName: "Install Node.js"
+
+  - script: |
+      cd nest-backend
+      npm install
+      npm run lint
+      npm run test
+    displayName: "Install dependencies, lint, and test"
+
+  - script: |
+      cd nest-backend
+      npm run build
+    displayName: "Build the project"
+
+  - task: CopyFiles@2
+    inputs:
+      SourceFolder: "$(Build.SourcesDirectory)/nest-backend"
+      Contents: "**/dist/**"
+      TargetFolder: "$(Build.ArtifactStagingDirectory)"
+    displayName: "Copy build files"
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      PathtoPublish: "$(Build.ArtifactStagingDirectory)"
+      ArtifactName: "drop"
+    displayName: "Publish Artifact"
